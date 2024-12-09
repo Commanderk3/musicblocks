@@ -132,7 +132,7 @@ function MusicKeyboard(activity) {
      * @type {Array}
      */
     this.idContainer = [];
-  
+
     /**
      * Flag to track tick status.
      * @type {boolean}
@@ -179,7 +179,7 @@ function MusicKeyboard(activity) {
     // Each element in the array is [start time, note, id, duration, voice].
     this._notesPlayed = [];
 
-     /**
+    /**
      * Adds a row block to the keyboard.
      * @param {number} rowBlock - The row block to add.
      */
@@ -882,7 +882,7 @@ function MusicKeyboard(activity) {
 
     /**
      * Plays a sequence of musical notes recursively with a specified time delay.
-     * 
+     *
      * @param {number} counter - The index of the current note in the sequence.
      * @param {number} time - The time duration of the current note.
      * @param {HTMLElement} playButtonCell - The HTML element representing the play button.
@@ -970,7 +970,7 @@ function MusicKeyboard(activity) {
 
     /**
      * Plays a chord (multiple notes simultaneously) using a synthesizer.
-     * 
+     *
      * @param {string[]} notes - Array of note names to be played as a chord.
      * @param {number[]} noteValue - Array of note values (durations) for each note in the chord.
      * @param {string[]} instruments - Array of instrument names or identifiers for each note.
@@ -1026,7 +1026,7 @@ function MusicKeyboard(activity) {
 
     /**
      * Fills chromatic gaps in a given list of notes by padding with missing notes.
-     * 
+     *
      * @param {Object[]} noteList - List of notes represented as dictionaries containing `noteName` and `noteOctave`.
      * @returns {Object[]} A new list of notes with chromatic gaps filled.
      */
@@ -1173,7 +1173,7 @@ function MusicKeyboard(activity) {
 
     /**
      * Generates a sorted and filtered layout of keys based on note information.
-     * 
+     *
      * @returns {Object[]} An array of objects representing the layout of keys:
      * [
      *   {
@@ -1270,7 +1270,7 @@ function MusicKeyboard(activity) {
     /**
      * Sets notes in a specified column based on cell color markings.
      * Removes existing notes starting at the specified start time.
-     * 
+     *
      * @param {number} colIndex - The index of the column to set notes in.
      * @param {boolean} playNote - Indicates whether to trigger note playback.
      */
@@ -1310,7 +1310,7 @@ function MusicKeyboard(activity) {
 
     /**
      * Sets a note cell based on the provided parameters.
-     * 
+     *
      * @param {number} j - The row index of the note cell.
      * @param {number} colIndex - The column index of the note cell.
      * @param {string} start - The start time of the note.
@@ -1570,9 +1570,7 @@ function MusicKeyboard(activity) {
                 cell.style.maxWidth = cell.style.width;
 
                 if (
-                    selectedNotes[j].blockNumber.includes(
-                        this.displayLayout[n - i - 1].blockNumber
-                    )
+                    selectedNotes[j].blockNumber.includes(this.displayLayout[n - i - 1].blockNumber)
                 ) {
                     ind = selectedNotes[j].blockNumber.indexOf(
                         this.displayLayout[n - i - 1].blockNumber
@@ -1996,10 +1994,7 @@ function MusicKeyboard(activity) {
                         lastNote = null;
                     }
 
-                    if (
-                        pitchLabels[i].includes(lastNote) ||
-                        lastNote.includes(pitchLabels[i])
-                    ) {
+                    if (pitchLabels[i].includes(lastNote) || lastNote.includes(pitchLabels[i])) {
                         break;
                     }
                 }
@@ -2079,6 +2074,8 @@ function MusicKeyboard(activity) {
                         voice: this.layout[0].voice
                     });
                     this._sortLayout(this.layout);
+                    console.log("layout ", this.layout);
+                    console.log("display ", this.displayLayout);
 
                     this.displayLayout = this.layout.map((note) => {
                         if (SOLFEGENAMES.includes(note.noteName)) {
@@ -2227,7 +2224,7 @@ function MusicKeyboard(activity) {
     /**
      * Creates a column pie submenu based on the provided index and condition.
      * @param {number} index - The index used to retrieve block information.
-     * @param {string} condition - The condition that determines the type of submenu to create ('synthsblocks' or 'pitchblocks').    
+     * @param {string} condition - The condition that determines the type of submenu to create ('synthsblocks' or 'pitchblocks').
      */
     this._createColumnPieSubmenu = function (index, condition) {
         index = parseInt(index);
@@ -2644,8 +2641,18 @@ function MusicKeyboard(activity) {
                     this.displayLayout[p].blockNumber
                 ]);
 
-                this.displayLayout[p].objId = "blackRow" + myrow2Id.toString();
-                this.layout[p].objId = "blackRow" + myrow2Id.toString();
+                if (p >= 0 && p < this.layout.length) {
+                    this.displayLayout[p].objId = "whiteRow" + myrowId.toString();
+                    this.layout[p].objId = "whiteRow" + myrowId.toString();
+                } else {
+                    console.error(
+                        "Invalid index 'p':",
+                        p,
+                        "for this.layout. Length:",
+                        this.layout.length
+                    );
+                    // Handle the error appropriately.  Maybe skip this iteration, add a default element, or throw an error.
+                }
 
                 myrow2Id++;
                 newel2.innerHTML = "";
@@ -2749,9 +2756,10 @@ function MusicKeyboard(activity) {
                               ")</small><br/>"
                             : "";
                 }
-
-                this.displayLayout[p].objId = "blackRow" + myrow2Id.toString();
-                this.layout[p].objId = "blackRow" + myrow2Id.toString();
+                if (p >= 0 && p < this.layout.length) {
+                    this.displayLayout[p].objId = "whiteRow" + myrowId.toString();
+                    this.layout[p].objId = "whiteRow" + myrowId.toString();
+                }
 
                 myrow2Id++;
                 newel2.style.position = "relative";
@@ -2864,8 +2872,11 @@ function MusicKeyboard(activity) {
                     }
                 }
 
-                this.displayLayout[p].objId = "whiteRow" + myrowId.toString();
-                this.layout[p].objId = "whiteRow" + myrowId.toString();
+                if (
+                    p < this.layout.length) {
+                    this.displayLayout[p].objId = "whiteRow" + myrowId.toString();
+                    this.layout[p].objId = "whiteRow" + myrowId.toString();
+                } 
 
                 myrowId++;
                 newel.style.position = "relative";
@@ -2916,7 +2927,7 @@ function MusicKeyboard(activity) {
          * Adjacent notes with the same voice are clustered together to facilitate wrapping in "settimbre" block.
          * For example, notes like piano-do piano-re piano-mi guitar-fa piano-sol piano-la piano-ti
          * will be organized into clusters such as piano-[do re mi], guitar-fa, and piano-[sol la ti].
-         * 
+         *
          * @param {Array<Object>} selectedNotes - Array of selected notes to be processed.
          * @returns {Array<Array<number>>} - Array of arrays containing indices of selected notes grouped by voice.
          */
@@ -2952,7 +2963,7 @@ function MusicKeyboard(activity) {
         /**
          * Calculate the required length of the next "setTimbre" block based on selected notes.
          * This function computes the length of the next "setTimbre" block by considering the types and properties of the selected notes.
-         * 
+         *
          * @param {Array<Array<number>>} selectedNotesGrp - Groups of selected notes (indices) organized by voice similarity.
          * @param {Array<Object>} selectedNotes - Array of selected notes.
          * @returns {number} - Required length for the next "setTimbre" block.
