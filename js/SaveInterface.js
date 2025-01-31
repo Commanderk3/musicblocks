@@ -314,7 +314,6 @@ class SaveInterface {
                     currentTime += duration; // Accumulate time for next note
                 });
             });
-            activity.logo._midiData = {};
 
             // Generate MIDI file and trigger download
             const midiData = midi.toArray();
@@ -329,6 +328,7 @@ class SaveInterface {
         const data = activity.logo._midiData;
         setTimeout(() => {
             generateMidi(data);
+            activity.logo._midiData = {};
         },2000);
 
     }
