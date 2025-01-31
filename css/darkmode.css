@@ -55,11 +55,11 @@
 }
 
 .dark-mode .modal-content {
-    background-color: #1c1c1c;
+    background-color: #141414;
     color: #fff;
 }
 
 #submitLilypond {
     background-color: rgb(0, 102, 255);
-    color: #fff
+    color: #fff;
 }
