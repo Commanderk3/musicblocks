@@ -1762,6 +1762,7 @@ class Singer {
             const chordNotes = [];
             const chordDrums = [];
             const __playnote = () => {
+                let isStaccato = false;
                 const thisBlk = last(tur.singer.inNoteBlock);
                 // Rest?
                 if (tur.singer.notePitches[thisBlk] === undefined) return;
@@ -1822,6 +1823,7 @@ class Singer {
                     } else if (staccatoBeatValue > noteBeatValue) {
                         // staccato
                         beatValue = bpmFactor / staccatoBeatValue;
+                        isStaccato = true;
                     } else {
                         beatValue = bpmFactor / noteBeatValue;
                     }
@@ -2098,7 +2100,7 @@ class Singer {
                                             paramsEffects,
                                             null,
                                             false,
-                                            future
+                                            future,
                                         );
                                     }
                                 } else if (
@@ -2169,6 +2171,7 @@ class Singer {
                                                         tur.singer.glideOverride = 0;
                                                     }
                                                 } else {
+                                                    console.log("main");
                                                     activity.logo.synth.trigger(
                                                         turtle,
                                                         notes[d],
@@ -2177,7 +2180,8 @@ class Singer {
                                                         paramsEffects,
                                                         filters,
                                                         false,
-                                                        future
+                                                        future,
+                                                        isStaccato
                                                     );
                                                 }
                                             }

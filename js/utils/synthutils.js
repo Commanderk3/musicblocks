@@ -406,6 +406,8 @@ const validateAndSetParams = (defaultParams, params) => {
  */
 const instruments = { 0: {} };
 
+const instruments2 = { 0: {} };
+
 /**
  * Object containing mapping between instrument name and its source.
  * @type {Object.<string, [number, string]>}
@@ -1220,18 +1222,18 @@ function Synth() {
      * @param {string} sourceName - The name of the source.
      * @returns {Tone.Sampler|Tone.Player} - The created synth.
      */
-    this._createSampleSynth = (turtle, instrumentName, sourceName) => {
+    this._createSampleSynth = (turtle, instrumentName, sourceName, i = 0) => {
+
         let tempSynth;
         if (sourceName in this.samples.voice) {
             instrumentsSource[instrumentName] = [2, sourceName];
             const noteDict = {};
             if (sourceName in SAMPLECENTERNO) {
                 noteDict[SAMPLECENTERNO[sourceName][0]] = this.samples.voice[sourceName];
-            } else if (sourceName in MULTIPITCH) {
-                for (let i = 0; i < MULTIPITCH[sourceName].length; i++) {
-                    noteDict[MULTIPITCH[sourceName][i]] = this.samples.voice[sourceName][i];
-                }
-                tempSynth = new Tone.Sampler(noteDict);
+            } else if (sourceName in MULTIPITCH) {         
+                console.log(this.samples.voice[sourceName][i].substring(0, 10));
+                noteDict[MULTIPITCH[sourceName][i]] = this.samples.voice[sourceName][i];
+
             } else {
                 noteDict["C4"] = this.samples.voice[sourceName];
             }
@@ -1396,17 +1398,33 @@ function Synth() {
      * @param {Object} params - Additional parameters for synth configuration.
      */
     this.__createSynth = (turtle, instrumentName, sourceName, params) => {
-        // Ensure the structure is initialized
-
+        const beatValue = [0.6666666666666666, 2.6666666666666665, 1.3333333333333333];
         this._loadSample(sourceName);
         if (sourceName in this.samples.voice || sourceName in this.samples.drum) {
-            if (!instruments[turtle][instrumentName]) {
-                instruments[turtle][instrumentName] = this._createSampleSynth(
-                    turtle,
-                    instrumentName,
-                    sourceName,
-                    params
-                );
+            if (sourceName === "mandolin") {
+                if (!instruments[turtle]) instruments[turtle] = {};
+                if (!instruments[turtle][instrumentName]) instruments[turtle][instrumentName] = {};
+                for (let i = 0; i < beatValue.length; i++) {
+                    const beat = beatValue[i];
+                    instruments[turtle][instrumentName][beat] = this._createSampleSynth(
+                        turtle,
+                        instrumentName,
+                        sourceName,
+                        i,
+                        params
+                    );
+                }
+                console.log("created mandolin synth", instruments[turtle][instrumentName]);
+            } else {
+                if (!instruments[turtle][instrumentName]) {
+                    instruments[turtle][instrumentName] = this._createSampleSynth(
+                        turtle,
+                        instrumentName,
+                        sourceName,
+                        params
+                    );
+                    console.log("created sample synth", instruments[turtle][instrumentName]);
+                }
             }
         } else if (sourceName in BUILTIN_SYNTHS) {
             if (instruments[turtle] && instruments[turtle][instrumentName]) {
@@ -1427,11 +1445,7 @@ function Synth() {
             }
 
             if (!instruments[turtle][instrumentName]) {
-
-                instruments[turtle][instrumentName] = this._createCustomSynth(
-                    sourceName,
-                    params
-                );
+                instruments[turtle][instrumentName] = this._createCustomSynth(sourceName, params);
             }
 
             instrumentsSource[instrumentName] = [0, "poly"];
@@ -1481,6 +1495,7 @@ function Synth() {
     this.createSynth = (turtle, instrumentName, sourceName, params) => {
         // We may have a race condition with the samples loader.
         if (this.samples === null) {
+            console.log("***");
             this.samplesQueue.push([instrumentName, sourceName, params]);
 
             require(SOUNDSAMPLESDEFINES, () => {
@@ -1500,6 +1515,7 @@ function Synth() {
      * @returns {Tone.Instrument|null} - The loaded synth or null if not loaded.
      */
     this.loadSynth = (turtle, sourceName) => {
+        const beatValue = [0.6666666666666666, 2.6666666666666665, 1.3333333333333333];
         /* eslint-disable */
         if (sourceName.substring(0, 13) === "customsample_") {
             console.debug("loading custom " + sourceName);
@@ -1509,13 +1525,21 @@ function Synth() {
         this.createSynth(turtle, sourceName, sourceName, null);
         this.setVolume(turtle, sourceName, last(Singer.masterVolume));
 
-        if (sourceName in instruments[turtle]) {
+        if (sourceName in instruments[turtle] && sourceName === "mandolin") {
+            for (let i = 0; i < 3; i++) {
+                this.loadMultiSynth(turtle, sourceName, beatValue[i]);
+            }
+        } else if (sourceName in instruments[turtle]) {
             return instruments[turtle][sourceName].toDestination();
         }
 
         return null;
     };
     
+    this.loadMultiSynth = (turtle, sourceName, beatValue) => {
+        return instruments[turtle][sourceName][beatValue].toDestination();
+    }
+
     /**
      * Perform notes using the provided synth, notes, and parameters for effects and filters.
      * @function
@@ -1571,6 +1595,7 @@ function Synth() {
         if (paramsEffects === null && paramsFilters === null) {
             // See https://github.com/sugarlabs/musicblocks/issues/2951
             try {
+                console.log("trigger");
                 synth.triggerAttackRelease(notes, beatValue, Tone.now() + future);
             } catch(e) {
                 // eslint-disable-next-line no-console
@@ -1769,7 +1794,8 @@ function Synth() {
         paramsEffects,
         paramsFilters,
         setNote,
-        future
+        future,
+        staccato = false
     ) => {
         // eslint-disable-next-line no-console
         console.debug(
@@ -1818,19 +1844,32 @@ function Synth() {
             }
         }
 
+        //change tempSynth if staccato bool is true. Something like this:
+        //tempSynth = instruments[turtle][instrumentName][beatValue];
+        //Changes needs to be done here in trigger function. Maybe not in performNotes function.
         let tempNotes = notes;
         let tempSynth = instruments[turtle]["electronic synth"];
         let flag = 0;
+        const beatValues = [0.6666666666666666, 2.6666666666666665, 1.3333333333333333];
+
         if (instrumentName in instruments[turtle]) {
-            tempSynth = instruments[turtle][instrumentName];
-            flag = instrumentsSource[instrumentName][0];
+            if (instrumentName === "mandolin") {
+                console.log(staccato);
+                const closestValue = beatValues.reduce((prev, curr) =>
+                    Math.abs(curr - beatValue) < Math.abs(prev - beatValue) ? curr : prev
+                );
+                tempSynth = instruments[turtle][instrumentName][closestValue];
+                console.log("mandolin", tempSynth);
+            } else {
+                tempSynth = instruments[turtle][instrumentName];
+            }       
+            flag = instrumentsSource[instrumentName]?.[0] || 0;
             if (flag === 1 || flag === 2) {
-                const sampleName = instrumentsSource[instrumentName][1];
+                const sampleName = instrumentsSource[instrumentName]?.[1];
                 // eslint-disable-next-line no-console
                 console.debug(sampleName);
             }
         }
-
         // Get note values as per the source of the synth.
         if (future === undefined) {
             future = 0.0;
@@ -1856,6 +1895,7 @@ function Synth() {
                 }
                 break;
             case 2: // voice sample
+                    //normal
                 this._performNotes(
                     tempSynth.toDestination(),
                     notes,
@@ -1912,6 +1952,7 @@ function Synth() {
     };
 
     this.stopSound = (turtle, instrumentName, note) => {
+        // modify
         const flag = instrumentsSource[instrumentName][0];
         switch (flag) {
             case 1: // drum
@@ -1974,6 +2015,7 @@ function Synth() {
         if (instrumentName in instruments[turtle]) {
             synth = instruments[turtle][instrumentName];
         }
+        // fix here
 
         // eslint-disable-next-line no-console
         console.debug(
@@ -2033,8 +2075,20 @@ function Synth() {
 
         // Convert volume to decibals
         const db = Tone.gainToDb(nv / 100);
-        if (instrumentName in instruments[turtle]) {
-            instruments[turtle][instrumentName].volume.value = db;
+
+        if (instrumentName === "mandolin") {
+            // Defensive: loop through expected beat indexes
+            for (let i = 0; i < 3; i++) {
+                const synth = instruments[turtle][instrumentName][i];
+                if (synth && synth.volume) {
+                    synth.volume.value = db;
+                }
+            }
+        } else {
+            const synth = instruments[turtle][instrumentName];
+            if (synth && synth.volume) {
+                synth.volume.value = db;
+            }
         }
     };
     
