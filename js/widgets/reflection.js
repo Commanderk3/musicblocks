@@ -60,7 +60,7 @@ class ReflectionMatrix {
          */
         this.projectAlgorithm = "";
 
-        /** 
+        /**
          * MusicBlocks code
          * @type {string}
          */
@@ -98,11 +98,17 @@ class ReflectionMatrix {
         this.chatInterface.className = "chatInterface";
         widgetWindow.getWidgetBody().append(this.chatInterface);
 
-        widgetWindow.addButton(
+        this.summaryButton = widgetWindow.addButton(
             "notes_icon.svg",
             ReflectionMatrix.ICONSIZE,
             _("Summary")
-        ).onclick = () => this.getAnalysis();
+        );
+        this.summaryButton.onclick = () => this.getAnalysis();
+
+        if (this.chatHistory.length < 10) {
+            this.summaryButton.style.background = "gray";
+        }
+
         widgetWindow.addButton(
             "save-button-dark.svg",
             ReflectionMatrix.ICONSIZE,
@@ -166,12 +172,16 @@ class ReflectionMatrix {
             }
         };
 
-        const sendBtn = document.createElement("button");
-        sendBtn.className = "confirm-button";
-        sendBtn.style.marginRight = "10px";
-        sendBtn.innerText = "Send";
-        sendBtn.onclick = () => this.sendMessage();
-        this.inputContainer.appendChild(sendBtn);
+        this.sendBtn = document.createElement("button");
+        this.sendBtn.className = "confirm-button";
+        this.sendBtn.style.marginRight = "10px";
+        this.sendBtn.style.display = "flex";
+        this.sendBtn.style.justifyContent = "center";
+        this.sendBtn.style.alignItems = "center";
+        this.sendBtn.style.maxWidth = "30px";
+        this.sendBtn.innerText = "Send";
+        this.sendBtn.onclick = () => this.sendMessage();
+        this.inputContainer.appendChild(this.sendBtn);
 
         // first message
         this.chatInterface.appendChild(this.inputContainer);
@@ -212,6 +222,11 @@ class ReflectionMatrix {
             dotCount = (dotCount + 1) % (maxDots + 1);
             this.dotsContainer.textContent = ".".repeat(dotCount);
         }, 500);
+
+        this.loader = document.createElement("div");
+        this.loader.className = "loader";
+        this.sendBtn.innerText = "";
+        this.sendBtn.appendChild(this.loader);
     }
 
     /**
@@ -223,6 +238,9 @@ class ReflectionMatrix {
             clearInterval(this.dotsInterval);
             this.typingDiv.remove();
             this.typingDiv = null;
+            this.loader.remove();
+            this.loader = null;
+            this.sendBtn.innerHTML = "Send";
         }
     }
 
@@ -349,7 +367,6 @@ class ReflectionMatrix {
         }
     }
 
-
     /**
      * Sends a message to the server and retrieves the bot's reply.
      *  @param {string} message - The user's message.
@@ -428,6 +445,7 @@ class ReflectionMatrix {
         let reply;
         // check if message is from user or bot
         if (user_query === true) {
+            if (this.typingDiv) return;
             reply = await this.generateBotReply(
                 message,
                 this.chatHistory,
@@ -449,6 +467,11 @@ class ReflectionMatrix {
             content: reply.response
         });
 
+        // Enable analysis button
+        if (this.chatHistory.length > 10) {
+            this.summaryButton.style.removeProperty("background");
+        }
+
         const messageContainer = document.createElement("div");
         messageContainer.className = "message-container";
 
@@ -467,7 +490,7 @@ class ReflectionMatrix {
         } else {
             botReply.innerText = reply.response;
         }
-        
+
         messageContainer.appendChild(senderName);
         messageContainer.appendChild(botReply);
 

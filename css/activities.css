@@ -2070,3 +2070,22 @@ table {
   align-self: flex-end;
   background-color: #DCF8C6;
 }
+
+.loader {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #296b97;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: translate(-50%, -50%) rotate(0deg);
+  }
+
+  100% {
+    transform: translate(-50%, -50%) rotate(360deg);
+  }
+}
